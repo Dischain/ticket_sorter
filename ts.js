@@ -31,7 +31,8 @@
 // 		action: <actionType>
 // 	},
 //  common: {
-// 		defaultAction: <defaultAction>,
+// 		commonAction: <commonActionType>,
+//		commonTransport: '<commonTransportType>',
 //
 //		seatPhrase: <seatPhrase>,
 // 		defaultSeatPhrase: <defaultSeatPhrase>,
@@ -48,6 +49,7 @@
 // described with kind of production:
 // 
 // <rule> = <actionType> <transportType> <transportNumber>
+//				| <commonActionType> <commonTransportType>
 // 				'from' <departureName> 'to' <destinationName>. 
 // 				<gatePhrase> <gateNumber> | <defaultGatePhrase>.
 // 				<seatPhrase> <seatNumber> | <defaultSeatPhrase>.
@@ -66,12 +68,36 @@
 	let backOrderedHT;
 
 	let tickets;
+
 	let sorted;
+	let lastBuiltPath;
 
 	let outputPhrasesConfig;
 
-	//TODO: write default config...
-	let defaultPhrasesConfig = {}
+	let defaultPhrasesConfig = {
+		flight: {
+			action: 'Take'
+		},
+		train: {
+			action: 'Take'
+		},
+		bus: {
+			action: 'Take'
+		},
+		common: {
+			action: 'Move',
+			transportType: '',
+
+			seatPhrase: 'Take your seat at',
+			defaultSeatPhrase: 'No seat assignment',
+
+			baggagePhrase: 'Baggage drop at ticket counter',
+			defaultBaggagePhrase: 'Baggage will be automatically transferred from your last leg',
+
+			gatePhrase: 'Gate',
+			defaultGatePhrase: 'No gate'
+		}
+	}
 
 	function buildHashTables() {
 		forwardOrderedHT = tickets.reduce(function(init, ticket, index) {
@@ -103,10 +129,10 @@
 			currentTicket = tickets[currentIndex];
 
 			if (ordered) {
-				if (to && currentTicket.departure.name === to) break;
+				if (to && currentTicket.destination.name === to) break;
 				currentIndex = hashTable[currentTicket.destination.name];
 			} else {
-				if (to && currrentTicket.from === to) break;
+				//if (to && currrentTicket.departure.name === to) break;
 				currentIndex = hashTable[currentTicket.departure.name];
 			}
 		}
@@ -118,27 +144,26 @@
 	}
 
 	/*-----Error handling---------*/
-	const POINT_NOT_EXISTS = 1;
-	const EMPTY_TICKET_FIELD = 2;
-
 	function validateEndPoints(from, to, callback) {
-		let error = {
-			code: POINT_NOT_EXISTS,
+		let errorObj = {
+			//code: POINT_NOT_EXISTS,
 			message: 'Destination point do not exists',
 			invalidPoint: ''
 		};
 
 		let invalidPoint;
 
-		if (hashTable[from] === undefined) {
+		if (forwardOrderedHT[from] === undefined) {
 			invalidPoint = from;
-		} else if (dest && hashTable[dest] === undefined) {
-		    invalidPoint = dest;
+		} else if (to && forwardOrderedHT[to] === undefined) {
+		    invalidPoint = to;
 		}
 
 		if (invalidPoint) {
-			error.invalidPoint = invalidPoint;
-			callback(null, error);
+			errorObj.invalidPoint = invalidPoint;
+			callback(errorObj);
+		} else {
+			callback();
 		}
 	}
 
@@ -146,8 +171,7 @@
 	// If not, should pass an error with array of indexes of
 	// empty field tickets into a callback.
 	function validateData(data, callback) {
-		let error = {
-			code: EMPTY_TICKET_FIELD,
+		let errorObj = {
 			message: 'Required fields are empty',
 			invalidTicketsIndexes: []
 		};
@@ -155,15 +179,97 @@
 		data.forEach(function(ticket, index) {
 			if (ticket.departure.name === '' 
 				|| ticket.destination.name === '')
-				error.invalidTicketsIndexes.push(index);
+				errorObj.invalidTicketsIndexes.push(index);
 		});
 
-		if (error.invalidTicketsIndexes.length > 0) {
-			callback(error);
+		if (errorObj.invalidTicketsIndexes.length > 0) {
+			callback(errorObj);
 		} else {
 			tickets = data;
+
 			buildHashTables();
 		}
+	}
+
+	/*---------Other-----------*/
+
+	//TODO: deepest refactoring :)
+	// Honestly, this function must be declared outside this module.
+	// Get{prase_type} functions should take all needefull data as arguments
+	// to implement more functional style and to be testable.
+	function printTicket(index) {
+		let ticket = tickets[index];
+		let sp = ' ', dot = '.', eol = '\n';
+		let ticketStr = '';
+
+		const transportType = ticket.transport.type
+			|| outputPhrasesConfig.common.transportType;		
+
+		const action = outputPhrasesConfig[transportType].action
+			|| outputPhrasesConfig.common.action;
+
+		const transportNumber = ticket.transport.routeNumber || '';
+
+		const departureName = ticket.departure.name;
+		const destinationName = ticket.destination.name;
+
+		let getSeatPhrase = function() {
+			let seatNumber = ticket.transport.seat;
+			let seatPhrase;
+			if (seatNumber) {
+				seatPhrase = outputPhrasesConfig.common.seatPhrase;
+
+				return sp + seatPhrase + sp + seatNumber + dot;
+			} else {
+				seatPhrase = outputPhrasesConfig.common.defaultSeatPhrase;
+
+				return sp + seatPhrase + dot;
+			}
+		};
+
+		let getGatePhrase = function() {
+			let gatePhrase, gateNumber;
+
+			if (transportType === 'flight'){
+				if (ticket.transport.gate) {
+					gatePhrase = outputPhrasesConfig.common.gatePhrase;
+					gateNumber = ticket.transport.gate;
+
+					return sp + gatePhrase + sp + gateNumber + dot;
+				} else {
+					gatePhrase = outputPhrasesConfig.common.defaultGatePhrase;
+
+					return sp + gatePhrase + dot;
+				}
+			} else {
+				return '';
+			}
+		}
+
+		let getBaggagePhrase = function() {
+			let baggagePhrase, baggageNumber;
+
+			if (transportType === 'flight') {
+				if (ticket.transport.baggage) {
+					baggagePhrase = outputPhrasesConfig.common.baggagePhrase
+					baggageNumber = ticket.transport.baggage;
+
+					return sp + baggagePhrase + sp + baggageNumber + dot;
+				} else {
+					baggagePhrase = outputPhrasesConfig.common.defaultBaggagePhrase;
+					
+					return sp + baggagePhrase + dot;
+				}
+			} else {
+				return '';
+			}
+		}
+
+		ticketStr = action + sp + transportType + sp + transportNumber
+			+ ' from ' + departureName + ' to ' + destinationName + dot
+			+ getGatePhrase() + getSeatPhrase() + getBaggagePhrase() + eol;
+
+		return ticketStr; 
 	}
 
 	/*---Public Section ---*/
@@ -171,7 +277,9 @@
 
 	ts.initialize = function(data, config, callback) {
 		let cb;
-		
+
+		sorted = lastBuiltPath = null;
+
 		if (arguments.length == 2) {
 			cb = config;
 			outputPhrasesConfig = defaultPhrasesConfig;
@@ -182,37 +290,53 @@
 
 		validateData(data, cb);
 
-		//buildHashTables();
-
 		return ts;
 	}
 
 	ts.sort = function(callback) {
-		
-		let middleIndex = Math.floor(tickets.length / 2);
-		let firstTicketIndex = 
-			traverse(tickets[middleIndex].destination.name, null, false).pop();
-		let firstTicketOrigin = tickets[firstTicketIndex].departure.name;
-		
-		sorted = traverse(firstTicketOrigin, null, true);
+		if (tickets) {
+			let middleIndex = Math.floor(tickets.length / 2);
+			let firstTicketIndex = 
+				traverse(tickets[middleIndex].destination.name, null, false).pop();
+			let firstTicketDepName = tickets[firstTicketIndex].departure.name;
+			
+			sorted = traverse(firstTicketDepName, null, true);
+			lastBuiltPath = sorted;
 
-		if (callback)
-			callback(sorted);
+			if (callback)
+				callback(sorted);
+		}
 
 		return ts;    
 	}
 
+	ts.buildPath = function(from, to, callback) {
+		validateEndPoints(from, to, function(err) {
+			if (err) {
+				callback(null, err)			
+			} else {
+				lastBuiltPath = traverse(from, to, true);
+				callback(lastBuiltPath);
+			}
+		});		
+
+		return ts;
+	}
+
 	ts.prettyPrint = function(callback) {
-		let output = '';
-		sorted.forEach((index) => {
-			output += 'from ' + tickets[index].departure.name +
-					  ' to ' + tickets[index].destination.name +
-					  '.\n';
-		});
-		callback(output);
+		if (tickets && lastBuiltPath) {
+			let output = [];
+			lastBuiltPath.forEach((index) => {
+				output.push(printTicket(index));
+			});
+			callback(output);
+		}
+
+		return ts;
 	}
 
 	window.ts = ts;
 }(window));
 
-//to use this api, you should minify js code with one of the available task runner
+//to use this api, you should minify js code with one of 
+//the available task runner

@@ -1,12 +1,14 @@
 <body>
+	<div id="main"></div>
 	<script src="./ts.js"></script><script type="text/javascript"> 
 		var data = [
 			{
 				transport: {
 					type: 'flight',
 					routeNumber: 'A1',
-					seat: '22',
-					gate: 'X77'
+					//seat: '22',
+					gate: 'X77',
+					baggage: 301
 				},
 				departure: {
 					name: 'Madrid'
@@ -23,7 +25,7 @@
 					gate: 'X77'
 				},
 				departure: {
-					name: ''
+					name: 'Barcelona'
 				},
 				destination: {
 					name: 'Tokyo'
@@ -31,10 +33,9 @@
 			},
 			{
 				transport: {
-					type: 'flight',
+					type: 'train',
 					routeNumber: 'A1',
 					seat: '22',
-					gate: 'X77'
 				},
 				departure: {
 					name: 'Tokyo'
@@ -59,10 +60,10 @@
 			},
 			{
 				transport: {
-					type: 'flight',
-					routeNumber: 'A1',
+					type: 'train',
+					routeNumber: 'A1'/*,
 					seat: '22',
-					gate: 'X77'
+					gate: 'X77'*/
 				},
 				departure: {
 					name: 'Simferopol'
@@ -89,8 +90,8 @@
 				transport: {
 					type: 'flight',
 					routeNumber: 'A1',
-					seat: '22',
-					gate: 'X77'
+					seat: '22'/*,
+					gate: 'X77'*/
 				},
 				departure: {
 					name: 'Fastiv'
@@ -100,10 +101,30 @@
 				}
 			}
 		];    
-		ts.initialize(data, {}, function(error) {
+		ts.initialize(data, function(error) {
 			console.log(error.message);
+			console.log(data[error.invalidTicketsIndexes]);
 		})
 		.sort()
-		.prettyPrint(console.log);
+		//.prettyPrint(console.log);
+
+		/*ts.initialize(data, function(error) {
+			console.log(error.message);
+			console.log(data[error.invalidTicketsIndexes]);
+		})
+		.buildPath('Madrid', 'Simferopol', function(path, error) {
+			if (error) console.log(error)
+			else console.log(path)
+		})*/
+		.prettyPrint(function(data) {
+			var main = document.getElementById('main');
+			data.forEach((item) => {		
+				var node = document.createElement('div');
+				node.style.margin = '10px';
+				var textNode = document.createTextNode(item);
+				node.appendChild(textNode);
+				main.appendChild(node);
+			})
+		});
 	</script>
 </body>
