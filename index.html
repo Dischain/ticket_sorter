@@ -99,23 +99,33 @@
 				destination: {
 					name: 'Kiev'
 				}
+			},
+			{
+				transport: {
+					//type: ''
+				},
+				departure: {
+					name: 'Lviv'
+				},
+				destination: {
+					name: 'Fastiv'
+				}
 			}
 		];    
 		ts.initialize(data, function(error) {
 			console.log(error.message);
-			console.log(data[error.invalidTicketsIndexes]);
+			console.log(error.invalidTicketsIndexes);
 		})
 		.sort()
-		//.prettyPrint(console.log);
 
-		/*ts.initialize(data, function(error) {
-			console.log(error.message);
-			console.log(data[error.invalidTicketsIndexes]);
-		})
-		.buildPath('Madrid', 'Simferopol', function(path, error) {
-			if (error) console.log(error)
-			else console.log(path)
-		})*/
+		// ts.initialize(data, function(error) {
+		// 	console.log(error.message);
+		// 	console.log(error.invalidTicketsIndexes);
+		// })
+		// .buildPath('Madrid', 'Simferopol', function(path, error) {
+		// 	if (error) console.log(error)
+		// 	else console.log(path)
+		// })
 		.prettyPrint(function(data) {
 			var main = document.getElementById('main');
 			data.forEach((item) => {		
