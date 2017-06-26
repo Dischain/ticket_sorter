@@ -211,7 +211,7 @@
  	 * Has linear asymptotic complexity.
  	 *
  	 * @param {Functio} callback
- 	 * @returns {Object} ticket sorted object
+ 	 * @returns {Object} ticket sorter object
 	 */
 	ts.sort = function(callback) {
 		if (initialTickets) {
@@ -242,7 +242,7 @@
 	 * @param {String} from
 	 * @param {String} to
 	 * @param {Function} callback
-	 * @returns {Object} ticket sorted object
+	 * @returns {Object} ticket sorter object
 	 */
 	ts.buildPath = function(from, to, callback) {
 		validateEndPoints(from, to, function(err) {
@@ -264,7 +264,7 @@
 	 * Common representation rule for one ticket can be described 
 	 * with kind of production:
 	 * 
-	 * <rule> = <actionType> <transportType> <transportNumber>
+	 * <phrase> = <actionType> <transportType> <transportNumber>
 	 *			| <commonActionType> <commonTransportType>
 	 *			'from' <departureName> 'to' <destinationName>. 
  	 *			<gatePhrase> <gateNumber> | <defaultGatePhrase>.
@@ -292,8 +292,6 @@
 			});
 			callback(output);
 		}
-
-		return ts;
 	}
 
 	/*                   Error handling
