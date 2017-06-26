@@ -1,0 +1,27 @@
+.ticket-container {
+    padding: 10px;
+    margin: auto;
+    margin-bottom: 20px;
+    margin-top: 20px;
+    max-width: 500px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: orange;
+}
+
+.ticket-container p1 {
+	text-decoration: underline red;
+	font-size: 20px;
+	font-family: Georgia, Arial, serif;
+}
+
+.ticket-list {
+	margin: 10px;
+}
+
+.ticket-list__ticket {
+	font-family: Georgia, Arial, serif;
+	font-size: 15px;
+	margin: 5px 10px 5px 10px;
+	padding: 5px 0px;
+}
