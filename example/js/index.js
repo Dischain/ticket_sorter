@@ -119,7 +119,7 @@ ts.initialize(data, function(error) {
 		let textNode = document.createTextNode(item);
 		node.appendChild(textNode);
 		main.appendChild(node);
-	})
+	});
 });
 
 
@@ -143,5 +143,5 @@ ts.initialize(data, function(error) {
 		let textNode = document.createTextNode(item);
 		node.appendChild(textNode);
 		main.appendChild(node);
-	})
+	});
 });
